@@ -65,4 +65,28 @@ package object kmedianas2D {
       calculePromedioPar(medianaVieja, puntosCluster)
     }.seq
   }
+
+  def hayConvergenciaSeq(eta: Double, medianasViejas: Seq[Punto], medianasNuevas: Seq[Punto]): Boolean = {
+    medianasViejas.zip(medianasNuevas).forall { case (vieja, nueva) =>
+      vieja.distaciaAlCuadrado(nueva) <= eta
+  }
+  }
+
+  def hayConvergenciaPar(eta: Double, medianasViejas: Seq[Punto], medianasNuevas: Seq[Punto]): Boolean = {
+    val n = medianasViejas.length
+
+    if (n <= 1) {
+      //caso base
+      hayConvergenciaSeq(eta, medianasViejas, medianasNuevas)
+    } else {
+      val m = n / 2
+      val (convergencia1, convergencia2) = parallel(
+        hayConvergenciaPar(eta, medianasViejas.slice(0,m), medianasNuevas.slice(0,m)),
+        hayConvergenciaPar(eta, medianasViejas.slice(m,n), medianasNuevas.slice(m,n))
+      )
+      //todas dos deben converger
+      convergencia1 && convergencia2
+    }
+  }
+
 }
