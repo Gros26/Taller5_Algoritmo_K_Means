@@ -1,5 +1,7 @@
 import common._
 
+import scala.collection.parallel.CollectionConverters._
+
 package object kmedianas2D {
   class Punto(val x: Double, val y: Double) {
     private def cuadrado(v: Double):Double = v * v
@@ -33,6 +35,34 @@ package object kmedianas2D {
     }
   }
 
-  def
+  def calculePromedioSeq(medianaVieja: Punto, puntos: Seq[Punto]):Punto = {
+    if (puntos.isEmpty) medianaVieja
+    else {
+      new Punto(puntos.map(p => p.x).sum / puntos.length, puntos.map(p=>p.y).sum / puntos.length)
+    }
+  }
+
   
+  def calculePromedioPar(medianaVieja: Punto, puntos: Seq[Punto]):Punto = {
+    if (puntos.isEmpty) medianaVieja
+    else {
+      val puntosPar = puntos.par
+      new Punto(puntosPar.map(p => p.x).sum / puntos.length, puntosPar.map(p=>p.y).sum / puntos.length)
+    }
+  }
+
+  def actualizarSeq(clasif: Map[Punto, Seq[Punto]], medianasViejas: Seq[Punto]) = {
+    medianasViejas.map { medianaVieja =>
+      val puntosCluster = clasif.getOrElse(medianaVieja, Seq())
+      calculePromedioSeq(medianaVieja, puntosCluster)
+    }
+  }
+
+  // paralelismo de datos
+  def actualizarPar(clasif: Map[Punto, Seq[Punto]], medianasViejas: Seq[Punto]) = {
+    medianasViejas.par.map { medianaVieja =>
+      val puntosCluster = clasif.getOrElse(medianaVieja, Seq())
+      calculePromedioPar(medianaVieja, puntosCluster)
+    }.seq
+  }
 }
