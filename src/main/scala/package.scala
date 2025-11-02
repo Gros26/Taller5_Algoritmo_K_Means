@@ -1,6 +1,8 @@
 import common._
 
+import scala.annotation.tailrec
 import scala.collection.parallel.CollectionConverters._
+import scala.util.Random
 
 package object kmedianas2D {
   class Punto(val x: Double, val y: Double) {
@@ -51,42 +53,64 @@ package object kmedianas2D {
     }
   }
 
-  def actualizarSeq(clasif: Map[Punto, Seq[Punto]], medianasViejas: Seq[Punto]) = {
-    medianasViejas.map { medianaVieja =>
+  def actualizarSeq(clasif: Map[Punto, Seq[Punto]], medianasViejas: Seq[Punto]): Seq[Punto] = {
+    for (medianaVieja <- medianasViejas) yield {
       val puntosCluster = clasif.getOrElse(medianaVieja, Seq())
       calculePromedioSeq(medianaVieja, puntosCluster)
     }
   }
 
   // paralelismo de datos
-  def actualizarPar(clasif: Map[Punto, Seq[Punto]], medianasViejas: Seq[Punto]) = {
-    medianasViejas.par.map { medianaVieja =>
+  def actualizarPar(clasif: Map[Punto, Seq[Punto]], medianasViejas: Seq[Punto]): Seq[Punto] = {
+    (for (medianaVieja <- medianasViejas.par) yield {
       val puntosCluster = clasif.getOrElse(medianaVieja, Seq())
       calculePromedioPar(medianaVieja, puntosCluster)
-    }.seq
+    }).seq
   }
 
+  //debe ser iterativa o sea de cola
+  @tailrec
   def hayConvergenciaSeq(eta: Double, medianasViejas: Seq[Punto], medianasNuevas: Seq[Punto]): Boolean = {
-    medianasViejas.zip(medianasNuevas).forall { case (vieja, nueva) =>
-      vieja.distaciaAlCuadrado(nueva) <= eta
-  }
-  }
-
-  def hayConvergenciaPar(eta: Double, medianasViejas: Seq[Punto], medianasNuevas: Seq[Punto]): Boolean = {
-    val n = medianasViejas.length
-
-    if (n <= 1) {
-      //caso base
-      hayConvergenciaSeq(eta, medianasViejas, medianasNuevas)
-    } else {
-      val m = n / 2
-      val (convergencia1, convergencia2) = parallel(
-        hayConvergenciaPar(eta, medianasViejas.slice(0,m), medianasNuevas.slice(0,m)),
-        hayConvergenciaPar(eta, medianasViejas.slice(m,n), medianasNuevas.slice(m,n))
-      )
-      //todas dos deben converger
-      convergencia1 && convergencia2
+    (medianasViejas, medianasNuevas) match {
+      case (Seq(), Seq()) => true  //convergio
+      case (v +: vs, n +: ns) =>
+        if (v.distaciaAlCuadrado(n) <= eta) {
+          hayConvergenciaSeq(eta, vs, ns)
+        } else {
+          false
+        }
+      case _ => false
     }
   }
 
+  def hayConvergenciaPar(eta: Double, medianasViejas: Seq[Punto], medianasNuevas: Seq[Punto]): Boolean = {
+    (medianasViejas, medianasNuevas) match {
+      case (Seq(), Seq()) | (Seq(_), Seq(_)) => 
+        //caso base
+        hayConvergenciaSeq(eta, medianasViejas, medianasNuevas)
+      case (vs, ns) =>
+        val m = vs.length / 2
+        val (convergencia1, convergencia2) = parallel(
+          hayConvergenciaPar(eta, vs.slice(0, m), ns.slice(0, m)),
+          hayConvergenciaPar(eta, vs.slice(m, vs.length), ns.slice(m, ns.length))
+        )
+        //los dos deben converger
+        convergencia1 && convergencia2
+    }
+  }
+
+  def generarPuntos(k: Int, num: Int):Seq[Punto] = {
+    val randx= new Random
+    val randy = new Random
+    (0 until num).map({ i =>
+      val x = ((i + 1) % k) * 1.0 / k + randx.nextDouble() * 0.5
+      val y = ((i + 5) % k) * 1.0 / k + randy.nextDouble() * 0.5
+      new Punto(x,y)
+    })
+  }
+
+  def inicializarMedianas(k: Int, puntos: Seq[Punto]):Seq[Punto] = {
+    val rand = new Random
+    (0 until k).map( _ => puntos(rand.nextInt(puntos.length)))
+  }
 }
