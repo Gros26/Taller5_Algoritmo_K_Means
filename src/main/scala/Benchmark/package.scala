@@ -79,7 +79,7 @@ package object Benchmark {
     val puntosPar = puntos
     val medianasPar = medianasSeq
     val medianasParfin = kMedianasPar(puntosPar, medianasPar, eta)
-    val clasifFinalPar = clasificarPar(umbral(puntosPar.length))(puntosPar,medianasParfin)
+    val clasifFinalPar = clasificarPar(puntosPar.length)(puntosPar,medianasParfin)
     val tiempoPar = tiempoDe(kMedianasPar(puntosPar, medianasPar, eta))
 
     // Hacer gráfica de los resultados del proceso paralelo
