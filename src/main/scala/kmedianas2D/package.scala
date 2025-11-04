@@ -99,6 +99,23 @@ package object kmedianas2D {
     }
   }
 
+  @tailrec
+  final def kMedianasSeq(puntos: Seq[Punto], medianas: Seq[Punto], eta: Double): Seq[Punto] = {
+    val clasificados = clasificarSeq(puntos, medianas)
+    val medianasNuevas = actualizarSeq(clasificados, medianas)
+    if (hayConvergenciaSeq(eta, medianas, medianasNuevas)) medianasNuevas
+    else kMedianasSeq(puntos, medianasNuevas , eta)
+  }
+
+  @tailrec
+  final def kMedianasPar(puntos: Seq[Punto], medianas: Seq[Punto], eta: Double): Seq[Punto] = {
+    val umbral = 10
+    val clasificados = clasificarPar(umbral)(puntos, medianas)
+    val medianasNuevas = actualizarPar(clasificados, medianas)
+    if (hayConvergenciaPar(eta, medianas, medianasNuevas)) medianasNuevas
+    else kMedianasPar(puntos, medianasNuevas, eta)
+  }
+
   def generarPuntos(k: Int, num: Int):Seq[Punto] = {
     val randx= new Random
     val randy = new Random
