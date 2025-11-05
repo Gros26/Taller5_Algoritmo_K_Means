@@ -1,4 +1,4 @@
-import common._
+import Benchmark._
 import kmedianas2D._
 
 // Crear algunos puntos de ejemplo
@@ -232,19 +232,66 @@ val longitud3 = medianas3_init.length
 val todasEnPuntos = medianas3_init.forall(m => puntos16_init.contains(m))
 // Esperado: true
 
-// ==================== 11. PRUEBAS INTEGRACIÓN (si tienes kMedianasSeq/Par) ====================
+// =================== 11. PRUEBAS kMedianasSeq y kMedianasPar =====================
 
-// Caso 1: Algoritmo completo pequeño
-val puntosKmeans = generarPuntos(2, 20)
-val medianasIniciales = inicializarMedianas(2, puntosKmeans)
-// Descomentar cuando implementes kMedianasSeq:
-// val resultadoKmeans = kMedianasSeq(puntosKmeans, medianasIniciales, 0.01)
-// Esperado: Seq de 2 medianas convergidas
+val eta = 0.01
 
-// Caso 2: Comparar versión secuencial y paralela
-val puntosKmeans2 = generarPuntos(4, 100)
-val medianasIniciales2 = inicializarMedianas(4, puntosKmeans2)
-// Descomentar cuando implementes ambas:
-// val resultadoSeq = kMedianasSeq(puntosKmeans2, medianasIniciales2, 0.01)
-// val resultadoPar = kMedianasPar(puntosKmeans2, medianasIniciales2, 0.01)
-// Esperado: Ambos deben dar resultados similares
+// Caso 1: n=16, k=2
+val puntos1 = generarPuntos(2, 16).toSeq
+val meds1   = inicializarMedianas(2, puntos1)
+val r1Seq   = kMedianasSeq(puntos1, meds1, eta)
+val r1Par   = kMedianasPar(puntos1, meds1, eta)
+
+// Caso 2: n=64, k=4
+val puntos2 = generarPuntos(4, 64).toSeq
+val meds2   = inicializarMedianas(4, puntos2)
+val r2Seq   = kMedianasSeq(puntos2, meds2, eta)
+val r2Par   = kMedianasPar(puntos2, meds2, eta)
+
+// Caso 3: n=256, k=8
+val puntos3 = generarPuntos(8, 256).toSeq
+val meds3   = inicializarMedianas(8, puntos3)
+val r3Seq   = kMedianasSeq(puntos3, meds3, eta)
+val r3Par   = kMedianasPar(puntos3, meds3, eta)
+
+// Caso 4: n=1024, k=4
+val puntos4 = generarPuntos(4, 1024).toSeq
+val meds4   = inicializarMedianas(4, puntos4)
+val r4Seq   = kMedianasSeq(puntos4, meds4, eta)
+val r4Par   = kMedianasPar(puntos4, meds4, eta)
+
+// Caso 5: n=4096, k=16
+val puntos5 = generarPuntos(16, 4096).toSeq
+val meds5   = inicializarMedianas(16, puntos5)
+val r5Seq   = kMedianasSeq(puntos5, meds5, eta)
+val r5Par   = kMedianasPar(puntos5, meds5, eta)
+
+
+// ============================================================================
+// Script para probar el desempeño de kMedianasSeq y kMedianasPar
+// ============================================================================
+val Ns = Seq(1024, 4096, 8192, 16384, 32768)
+val Ks = Seq(2, 4, 8, 16)
+val reps = 5
+
+case class Row(n:Int, k:Int, tSeq:Double, tPar:Double, acc:Double)
+def avg(xs: Seq[Double]) = xs.sum / xs.size
+
+println("n,k,t_seq_ms,t_par_ms,acc")
+for {
+  n <- Ns
+  k <- Ks if k < n
+} {
+  val rows = (1 to reps).map { _ =>
+    val puntos = generarPuntos(k, n).toSeq
+    val (tSeq, tPar, acc) = tiemposKmedianas(puntos, k, eta)
+    Row(n,k,tSeq.value,tPar.value,acc)
+  }
+  val r = Row(
+    n, k,
+    avg(rows.map(r => r.tSeq)),
+    avg(rows.map(r=> r.tPar)),
+    avg(rows.map(r => r.acc))
+  )
+  println(f"${r.n},${r.k},${r.tSeq}%.2f,${r.tPar}%.2f,${r.acc}%.3f")
+}
