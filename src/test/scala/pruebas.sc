@@ -270,8 +270,9 @@ val r5Par   = kMedianasPar(puntos5, meds5, eta)
 // ============================================================================
 // Script para probar el desempeño de kMedianasSeq y kMedianasPar
 // ============================================================================
-val Ns = Seq(1024, 4096, 8192, 16384, 32768)
-val Ks = Seq(2, 4, 8, 16)
+val eta = 0.01
+val Ns = Seq(1024, 4096, 8192, 16384, 32768, 65536)
+val Ks = Seq(2, 4, 8, 16, 128, 256)
 val reps = 5
 
 case class Row(n:Int, k:Int, tSeq:Double, tPar:Double, acc:Double)
