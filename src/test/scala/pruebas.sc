@@ -362,29 +362,30 @@ val r5Par   = kMedianasPar(puntos5, meds5, eta)
 // ============================================================================
 // Script para probar el desempeño de kMedianasSeq y kMedianasPar
 // ============================================================================
-val eta = 0.01
 val Ns = Seq(1024, 4096, 8192, 16384, 32768, 65536)
 val Ks = Seq(2, 4, 8, 16, 128, 256)
+val etas = Seq(0.01, 0.001)
 val reps = 5
 
-case class Row(n:Int, k:Int, tSeq:Double, tPar:Double, acc:Double)
+case class Row(n:Int, k:Int, eta: Double, tSeq:Double, tPar:Double, acc:Double)
 def avg(xs: Seq[Double]) = xs.sum / xs.size
 
-println("n,k,t_seq_ms,t_par_ms,acc")
+println("n,k,eta,t_seq_ms,t_par_ms,acc")
 for {
+  eta <- etas
   n <- Ns
   k <- Ks if k < n
 } {
   val rows = (1 to reps).map { _ =>
     val puntos = generarPuntos(k, n).toSeq
     val (tSeq, tPar, acc) = tiemposKmedianas(puntos, k, eta)
-    Row(n,k,tSeq.value,tPar.value,acc)
+    Row(n,k, eta, tSeq.value,tPar.value,acc)
   }
   val r = Row(
-    n, k,
+    n, k, eta,
     avg(rows.map(r => r.tSeq)),
     avg(rows.map(r=> r.tPar)),
     avg(rows.map(r => r.acc))
   )
-  println(f"${r.n},${r.k},${r.tSeq}%.2f,${r.tPar}%.2f,${r.acc}%.3f")
+  println(f"${r.n},${r.k},${r.eta}%.3f,${r.tSeq}%.2f,${r.tPar}%.2f,${r.acc}%.3f")
 }
