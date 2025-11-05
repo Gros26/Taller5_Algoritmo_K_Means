@@ -60,6 +60,16 @@ val resultado2 = hallarPuntoMasCercano(new Punto(8.5, 8.5), medianas1)
 // Esperado: alguna de las medianas
 val resultado3 = hallarPuntoMasCercano(new Punto(5.0, 5.0), medianas1)
 
+// Caso 4: Con tres medianas, punto cerca de la del medio
+val medianas1_4 = Seq(p1, new Punto(5.0, 5.0), p3)
+val resultado4 = hallarPuntoMasCercano(new Punto(5.5, 5.5), medianas1_4)
+// Esperado: Punto(5.0, 5.0)
+
+// Caso 5: Punto en coordenadas negativas
+val medianas1_5 = Seq(new Punto(-2.0, -2.0), p1, p3)
+val resultado5 = hallarPuntoMasCercano(new Punto(-1.5, -1.5), medianas1_5)
+// Esperado: Punto(-2.0, -2.0)
+
 // ==================== 2. PRUEBAS clasificarSeq ====================
 
 // Caso 1: Clasificar 4 puntos en 2 clusters
@@ -77,6 +87,19 @@ val clasif2 = clasificarSeq(puntosIguales, medianasTest)
 val clasif3 = clasificarSeq(Seq(), medianasTest)
 // Esperado: Map vacío
 
+// Caso 4: Con 3 medianas y distribución uniforme
+val puntosUnif = Seq(
+  new Punto(1.0, 1.0), new Punto(5.0, 5.0), new Punto(9.0, 9.0)
+)
+val medianasUnif = Seq(p1, new Punto(5.0, 5.0), p3)
+val clasif4 = clasificarSeq(puntosUnif, medianasUnif)
+// Esperado: Cada mediana tiene 1 punto
+
+// Caso 5: Puntos duplicados
+val puntosDuplicados = Seq(p1, p1, p1, p3, p3)
+val clasif5 = clasificarSeq(puntosDuplicados, medianasTest)
+// Esperado: Map con p1 teniendo 3 elementos, p3 teniendo 2
+
 // ==================== 3. PRUEBAS clasificarPar ====================
 
 // Caso 1: Con umbral bajo (fuerza paralelismo)
@@ -93,6 +116,14 @@ val medianasMuchos = inicializarMedianas(3, puntosMuchos)
 val clasifSeqGrande = clasificarSeq(puntosMuchos, medianasMuchos)
 val clasifParGrande = clasificarPar(20)(puntosMuchos, medianasMuchos)
 // Esperado: Ambos deben tener las mismas claves y valores
+
+// Caso 4: Puntos duplicados con umbral bajo
+val clasifPar4 = clasificarPar(2)(puntosDuplicados, medianasTest)
+// Esperado: Mismo resultado que clasificarSeq con puntos duplicados
+
+// Caso 5: Secuencia vacía con umbral bajo
+val clasifPar5 = clasificarPar(2)(Seq(), medianasTest)
+// Esperado: Map vacío
 
 // ==================== 4. PRUEBAS calculePromedioSeq ====================
 
@@ -116,6 +147,15 @@ val promedio4 = calculePromedioSeq(p1, Seq(
 ))
 // Esperado: Punto(2.0, 2.0)
 
+// Caso 5: Promedio con puntos en diferentes cuadrantes
+val promedio5 = calculePromedioSeq(p1, Seq(
+  new Punto(1.0, 1.0),
+  new Punto(-1.0, 1.0),
+  new Punto(1.0, -1.0),
+  new Punto(-1.0, -1.0)
+))
+// Esperado: Punto(0.0, 0.0)
+
 // ==================== 5. PRUEBAS actualizarSeq ====================
 
 // Caso 1: Actualizar con clasificación simple
@@ -138,6 +178,21 @@ val medianas3 = Seq(p3, p1)  // Orden invertido
 val nuevasMedianas3 = actualizarSeq(clasifActualizar, medianas3)
 // Esperado: Primero promedio de p3, luego de p1
 
+// Caso 4: Actualizar con múltiples clusters de diferentes tamaños
+val clasifMultiple = Map(
+  p1 -> Seq(new Punto(1.0, 1.0)),
+  new Punto(5.0, 5.0) -> Seq(new Punto(4.0, 4.0), new Punto(5.0, 5.0), new Punto(6.0, 6.0)),
+  p3 -> Seq(new Punto(8.0, 8.0), new Punto(9.0, 9.0))
+)
+val medianas5 = Seq(p1, new Punto(5.0, 5.0), p3)
+val nuevasMedianas4 = actualizarSeq(clasifMultiple, medianas5)
+// Esperado: Seq(Punto(1.0, 1.0), Punto(5.0, 5.0), Punto(8.5, 8.5))
+
+// Caso 5: Todos los clusters vacíos
+val clasifTodosVacios = Map(p1 -> Seq(), p3 -> Seq())
+val nuevasMedianas5 = actualizarSeq(clasifTodosVacios, Seq(p1, p3))
+// Esperado: Seq(p1, p3) - mantiene todas las medianas viejas
+
 // ==================== 6. PRUEBAS actualizarPar ====================
 
 // Caso 1: Comparar con versión secuencial
@@ -151,6 +206,20 @@ val clasif16 = clasificarSeq(puntos16, medianas4)
 val actualizadaSeq = actualizarSeq(clasif16, medianas4)
 val actualizadaPar = actualizarPar(clasif16, medianas4)
 // Esperado: Ambas iguales
+
+// Caso 3: Con clusters de diferentes tamaños
+val nuevasMedianasPar3 = actualizarPar(clasifMultiple, medianas5)
+// Esperado: Mismo resultado que actualizarSeq con clasifMultiple
+
+// Caso 4: Con un solo cluster
+val clasifUnCluster = Map(p1 -> Seq(new Punto(1.0, 1.0), new Punto(2.0, 2.0)))
+val nuevasMedianasPar4 = actualizarPar(clasifUnCluster, Seq(p1))
+// Esperado: Seq(Punto(1.5, 1.5))
+
+// Caso 5: Comparar con versión secuencial en caso de clusters vacíos
+val nuevasMedianasPar5 = actualizarPar(clasifTodosVacios, Seq(p1, p3))
+val sonIgualesAct = nuevasMedianasPar5 == actualizarSeq(clasifTodosVacios, Seq(p1, p3))
+// Esperado: true
 
 // ==================== 7. PRUEBAS hayConvergenciaSeq ====================
 
@@ -217,6 +286,16 @@ val puntos1000 = generarPuntos(8, 1000)
 val longitud2 = puntos1000.length
 // Esperado: 1000
 
+// Caso 4: Generar con k=1
+val puntos100_1 = generarPuntos(1, 100)
+val longitud4 = puntos100_1.length
+// Esperado: 100
+
+// Caso 5: Generar con n = k (caso límite)
+val puntos5_5 = generarPuntos(5, 5)
+val longitud5 = puntos5_5.length
+// Esperado: 5
+
 // ==================== 10. PRUEBAS inicializarMedianas ====================
 
 // Caso 1: Inicializar 3 medianas de 16 puntos
@@ -231,6 +310,19 @@ val longitud3 = medianas3_init.length
 // Caso 3: Verificar que las medianas están en los puntos originales
 val todasEnPuntos = medianas3_init.forall(m => puntos16_init.contains(m))
 // Esperado: true
+
+// Caso 4: k = 1 (una sola mediana)
+val puntos10_1med = generarPuntos(1, 10)
+val medianas1_init = inicializarMedianas(1, puntos10_1med)
+val longitud4_init = medianas1_init.length
+// Esperado: 1
+
+// Caso 5: k grande
+val puntos100_10med = generarPuntos(10, 100)
+val medianas10_init = inicializarMedianas(10, puntos100_10med)
+val longitud5_init = medianas10_init.length
+val todasDistintas = medianas10_init.distinct.length == medianas10_init.length
+// Esperado: 10 y true (todas distintas)
 
 // =================== 11. PRUEBAS kMedianasSeq y kMedianasPar =====================
 
