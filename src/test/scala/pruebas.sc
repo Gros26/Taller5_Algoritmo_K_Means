@@ -360,8 +360,10 @@ val r5Par   = kMedianasPar(puntos5, meds5, eta)
 
 
 // ============================================================================
-// Script para probar el desempeño de kMedianasSeq y kMedianasPar
+// Script para probar el desempeño de kMedianasSeq y kMedianasPar.
+// ¡ADVERTENCIA! Este script se tarda bastante en terminar.
 // ============================================================================
+/*
 val Ns = Seq(1024, 4096, 8192, 16384, 32768, 65536)
 val Ks = Seq(2, 4, 8, 16, 128, 256)
 val etas = Seq(0.01, 0.001)
@@ -389,3 +391,4 @@ for {
   )
   println(f"${r.n},${r.k},${r.eta}%.3f,${r.tSeq}%.2f,${r.tPar}%.2f,${r.acc}%.3f")
 }
+ */
